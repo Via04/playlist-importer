@@ -1,0 +1,4 @@
+### VSCode ###
+/.vscode
+### Secret ###
+/data/secret.json
