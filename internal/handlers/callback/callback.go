@@ -2,6 +2,7 @@ package callback
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,15 +11,22 @@ import (
 )
 
 var OauthGoogleCallback = func(w http.ResponseWriter, r *http.Request) {
-
 	if !auth.IsAuthenticated(w, r) {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
 	ctx := context.Background()
 	fmt.Fprintf(os.Stdout, "Request code value: %v\n", r.FormValue("code"))
-	response, err := ExchangeUserDataGoogle(ctx, r.FormValue("code"))
+	token, err := HandshakeYoutube(ctx, r.FormValue("code"))
 	if err != nil {
-		fmt.Fprintln(w, http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 	}
-	fmt.Fprintln(w, response)
+	// now create session token for user
+	fmt.Fprintf(os.Stdout, "token: %v", token)
+	session := Sessions.Append(*token)
+	fmt.Fprintf(os.Stdout, "Session: %v, key %v", Sessions.Read(session), session)
+	jsonOut, err := json.MarshalIndent(session, "", "    ")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	w.Write(jsonOut)
 }

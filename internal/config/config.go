@@ -29,13 +29,11 @@ func credentials() Web {
 		createCredentials.Do(func() {
 			secret, err := os.ReadFile("./data/secret.json")
 			if err != nil {
-			fmt.Fprintln(os.Stderr, "IOError: no secret.json")
+			fmt.Fprintf(os.Stderr, "IOError: no secret.json")
 			}
 			credentials = new(Web)
 			json.Unmarshal(secret, credentials)
-			fmt.Fprintf(os.Stdout, "new_addr:%p\n", credentials)
 		})
-		fmt.Fprintf(os.Stdout, "saved_addr:%p\n", credentials)
 		return *credentials
 	}()
 }

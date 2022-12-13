@@ -8,6 +8,10 @@ import (
 )
 
 var OauthGoogleLogin = func(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	oauthState := generateStateOauthCookie(w)
 	u := GoogleOauthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)

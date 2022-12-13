@@ -2,10 +2,13 @@ package intro
 // Welcome page code
 
 import (
-	"fmt"
 	"net/http"
 )
 
 var Intro = func(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "intro page")
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+		w.Write([]byte("intro page"))
 }
