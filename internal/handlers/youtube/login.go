@@ -1,4 +1,4 @@
-package auth
+package youtube
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 )
 
 var OauthGoogleLogin = func(w http.ResponseWriter, r *http.Request) {
+	// Generate cookie with random state (to protect from cross-site request forgery) and gets from Google redirect url, then redirects
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusBadRequest)
 		return

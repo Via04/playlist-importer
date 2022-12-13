@@ -1,4 +1,4 @@
-package callback
+package youtube
 
 import (
 	"encoding/base64"
@@ -10,6 +10,7 @@ import (
 )
 
 type session struct {
+	// Contains active user session with session_token as key and Google oauth2.token as value
 	rwmux   sync.RWMutex
 	session map[string]oauth2.Token
 	
@@ -17,6 +18,7 @@ type session struct {
 var initOnce sync.Once
 
 func (s *session) Append(token oauth2.Token)(session string) {
+	// Multithread-safe append to sessions
 	initOnce.Do(func() {s.session = make(map[string]oauth2.Token)})
 	s.rwmux.Lock()
 	defer s.rwmux.Unlock()
@@ -28,10 +30,12 @@ func (s *session) Append(token oauth2.Token)(session string) {
 	return session
 }
 
-func (s *session) Read(session string)(token oauth2.Token) {
+func (s *session) Read(session string)(token oauth2.Token, ok bool) {
+	// Multithread-safe read for sessions
 	s.rwmux.RLock()
 	defer s.rwmux.RUnlock()
-	return s.session[session]
+	token, ok = s.session[session]
+	return token, ok
 }
 
 var Sessions = new(session)

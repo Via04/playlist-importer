@@ -5,17 +5,16 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/via04/playlist_importer/internal/handlers/auth"
-	"github.com/via04/playlist_importer/internal/handlers/callback"
+	"github.com/via04/playlist_importer/internal/handlers/youtube"
 	"github.com/via04/playlist_importer/internal/handlers/intro"
-	"github.com/via04/playlist_importer/internal/handlers/list"
+	"github.com/via04/playlist_importer/internal/handlers/youtube/api"
 )
 
 func New() http.Handler {
 	smux := http.NewServeMux()
 	smux.HandleFunc("/", intro.Intro)
-	smux.HandleFunc("/youtube/login", auth.OauthGoogleLogin)
-	smux.HandleFunc("/youtube/callback", callback.OauthGoogleCallback)
-	smux.HandleFunc("/youtube/api", list.YoutubeList)
+	smux.HandleFunc("/youtube/login", youtube.OauthGoogleLogin)
+	smux.HandleFunc("/youtube/callback", youtube.OauthGoogleCallback)
+	smux.HandleFunc("/youtube/api", api.Decide)
 	return smux
 }

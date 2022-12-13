@@ -10,7 +10,7 @@ import (
 )
 
 type Web struct {
-	Web Content `json:"Pjc"`
+	Web Content `json:"web"`
 }
 
 type Content struct {
