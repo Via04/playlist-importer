@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	auth "github.com/via04/playlist_importer/internal/handlers/youtube"
-	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
@@ -50,34 +48,25 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 		w.Write(message)
 		return
 	}
-	switch method {
-	case "list":
-		List(ctx, w, r, token)
-	}
-}
-
-func List(ctx context.Context, w http.ResponseWriter, r *http.Request, token oauth2.Token) {
-	// get full playlist from youtube api
-	// r parameter will be used later
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Second * 10)
-	defer cancel()
-	tokenSource := auth.GoogleOauthConfig.TokenSource(ctxWithTimeout, &token)
-	youtubeService, err := youtube.NewService(ctxWithTimeout, option.WithTokenSource(tokenSource))
+	tokenSource := auth.GoogleOauthConfig.TokenSource(ctx, &token)
+	youtubeService, err := youtube.NewService(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
-		message, _ := json.MarshalIndent(map[string]string{"error": "cannot connect to Google servers"}, "", "    ")
-		w.Write(message)
+		w.Write(func()([]byte){
+							out, _ := json.MarshalIndent(map[string]string{"err": "no answer from Google Services"}, "", "    ")
+							return out
+				}())
 	}
-	youtubeList := youtubeService.Playlists.List([]string{"contentDetails", "id"}).Mine(true)
-	response, err := youtubeList.Do()
-	if err != nil {
-		w.WriteHeader(http.StatusRequestTimeout)
-		message, _ := json.MarshalIndent(map[string]string{"error": "no answer from Google"}, "", "    ")
-		w.Write(message)
+	resolver := apiResolver{
+		ctx: ctx,
+		w: w,
+		r: r,
+		service: youtubeService,
 	}
-	responseByte, err := response.MarshalJSON()
-	if err != nil {
-		panic(err)
+	switch method {
+	case "list":
+		resolver.list()
+	case "listVideos":
+		resolver.listVideos()
 	}
-	w.Write(responseByte)
 }

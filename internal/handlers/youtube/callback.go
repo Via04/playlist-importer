@@ -30,7 +30,7 @@ var OauthGoogleCallback = func(w http.ResponseWriter, r *http.Request) {
 					token, _ := Sessions.Read(session) 
 					return token
 				}(), session)
-	jsonOut, err := json.MarshalIndent(session, "", "    ")
+	jsonOut, err := json.MarshalIndent(map[string]string{"token": session}, "", "    ")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
