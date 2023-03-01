@@ -52,21 +52,21 @@ func Decide(w http.ResponseWriter, r *http.Request) {
 	youtubeService, err := youtube.NewService(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
-		w.Write(func()([]byte){
-							out, _ := json.MarshalIndent(map[string]string{"err": "no answer from Google Services"}, "", "    ")
-							return out
-				}())
+		w.Write(func() []byte {
+			out, _ := json.MarshalIndent(map[string]string{"err": "no answer from Google Services"}, "", "    ")
+			return out
+		}())
 	}
 	resolver := apiResolver{
-		ctx: ctx,
-		w: w,
-		r: r,
+		ctx:     ctx,
+		w:       w,
+		r:       jsonBody,
 		service: youtubeService,
 	}
 	switch method {
 	case "list":
-		resolver.list()
-	case "listVideos":
-		resolver.listVideos()
+		resolver.List()
+	case "listItems":
+		resolver.ListItems()
 	}
 }

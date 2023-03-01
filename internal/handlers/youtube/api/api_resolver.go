@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,11 +13,11 @@ import (
 type apiResolver struct {
 	ctx     context.Context
 	w       http.ResponseWriter
-	r       *http.Request
+	r       map[string]interface{}
 	service *youtube.Service
 }
 
-func (r *apiResolver) list() {
+func (r *apiResolver) List() {
 	// get full list of playlists from youtube api to decide which use later
 	// r parameter will be used later
 	ctxWithTimeout, cancel := context.WithTimeout(r.ctx, time.Second*10)
@@ -36,19 +37,10 @@ func (r *apiResolver) list() {
 	r.w.Write(responseByte)
 }
 
-func (r *apiResolver) listVideos() {
-	var jsonBody map[string]interface{}
+func (r *apiResolver) ListItems() {
 	ctxWithTimeout, cancel := context.WithTimeout(r.ctx, time.Second*10)
 	defer cancel()
-	err := json.NewDecoder(r.r.Body).Decode(&jsonBody)
-	if err != nil {
-		r.w.WriteHeader(http.StatusBadRequest)
-		r.w.Write(func() []byte {
-			out, _ := json.MarshalIndent(map[string]string{"error": "cannot unmarshal input"}, "", "    ")
-			return out
-		}())
-	}
-	playlistId, ok := jsonBody["playlistId"].(string)
+	playlistId, ok := r.r["playlistId"].(string)
 	if !ok {
 		r.w.WriteHeader(http.StatusBadRequest)
 		r.w.Write(func() []byte {
@@ -58,5 +50,28 @@ func (r *apiResolver) listVideos() {
 	}
 	call := r.service.PlaylistItems.List([]string{"contentDetails", "id", "snippet"}).PlaylistId(playlistId)
 	call.Context(ctxWithTimeout)
-	call.Do()
+	response, err := call.Do()
+	if err != nil {
+		r.w.WriteHeader(http.StatusGatewayTimeout)
+		r.w.Write(func() []byte {
+			out, _ := json.MarshalIndent(map[string]string{"error": "no answer from Google"}, "", "    ")
+			return out
+		}())
+	}
+	r.w.Write(func() []byte {
+		out, _ := response.MarshalJSON()
+		return out
+	}())
+}
+
+func(r * apiResolver) Import() {
+	query, ok := r.r["query"]
+	if ok != true {
+		r.w.WriteHeader(http.StatusBadRequest)
+		r.w.Write(func() []byte {
+			out, _ := json.MarshalIndent(map[string]string{"error": "no query specified"}, "", "    ")
+			return out
+		}())
+	}
+	fmt.Fprintf(r.w, "query is: %v", query)
 }
